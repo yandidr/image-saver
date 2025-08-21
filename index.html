@@ -2,7 +2,9 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Upload & Tampilkan Gambar Permanen</title>
+  <title>Upload, Tampilkan & Download Gambar</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,8 +15,18 @@
     h2 {
       margin-bottom: 15px;
     }
-    input[type="file"] {
-      margin: 10px 0;
+    input[type="file"], button {
+      margin: 10px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button {
+      background: #2196F3;
     }
     #preview {
       display: flex;
@@ -42,15 +54,17 @@
   </style>
 </head>
 <body>
-  <h2>Upload dan Tampilkan Gambar Permanen</h2>
+  <h2>Upload, Tampilkan & Download Gambar</h2>
   <input type="file" id="fileInput" multiple accept="image/*">
+  <button id="downloadAll">Download Semua Gambar</button>
   <div id="preview"></div>
 
   <script>
     const fileInput = document.getElementById("fileInput");
     const preview = document.getElementById("preview");
+    const downloadBtn = document.getElementById("downloadAll");
 
-    // Fungsi untuk menampilkan gambar dari array
+    // Fungsi untuk menampilkan gambar
     function displayImages(images) {
       preview.innerHTML = "";
       images.forEach(src => {
@@ -65,14 +79,13 @@
       });
     }
 
-    // Ambil data dari localStorage saat halaman dibuka
+    // Ambil data dari localStorage
     let savedImages = JSON.parse(localStorage.getItem("uploadedImages")) || [];
     displayImages(savedImages);
 
-    // Event upload gambar baru
+    // Event upload
     fileInput.addEventListener("change", () => {
       const files = fileInput.files;
-
       for (const file of files) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -82,6 +95,24 @@
         };
         reader.readAsDataURL(file);
       }
+    });
+
+    // Event download semua gambar
+    downloadBtn.addEventListener("click", () => {
+      if (savedImages.length === 0) {
+        alert("Belum ada gambar untuk diunduh.");
+        return;
+      }
+
+      const zip = new JSZip();
+      savedImages.forEach((dataUrl, index) => {
+        const imgData = dataUrl.split(",")[1]; // ambil base64 tanpa header
+        zip.file(`gambar_${index + 1}.png`, imgData, { base64: true });
+      });
+
+      zip.generateAsync({ type: "blob" }).then(content => {
+        saveAs(content, "gambar_upload.zip");
+      });
     });
   </script>
 </body>
